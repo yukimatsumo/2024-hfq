@@ -1,0 +1,145 @@
+    def new_make_dff2(self, Ic_uA:float, LIc:float, bias_voltage:float):
+        f_q = 2.06783385*(10**(-15))
+        
+        param_dic = {}
+        
+        if Ic_uA == 0:
+            return None
+        L_squid_pH = LIc/Ic_uA
+        param_dic["L_squid_pH"] = L_squid_pH
+
+        X1_Ic_uA = Ic_uA
+        X2_Ic_uA = Ic_uA*72/55
+        X3_Ic_uA = Ic_uA*54/55
+        X4_Ic_uA = Ic_uA
+        X5_Ic_uA = Ic_uA
+        X6_Ic_uA = 200
+        X7_Ic_uA = Ic_uA
+
+        X1_Ic_uA = round(X1_Ic_uA,3)
+        X2_Ic_uA = round(X2_Ic_uA,3)
+        X3_Ic_uA = round(X3_Ic_uA,3)
+        X4_Ic_uA = round(X4_Ic_uA,3)
+        X5_Ic_uA = round(X5_Ic_uA,3)
+        X6_Ic_uA = round(X6_Ic_uA,3)
+        X7_Ic_uA = round(X7_Ic_uA,3)
+
+
+        X1_Lsquid_pH = LIc/X1_Ic_uA
+        X2_Lsquid_pH = LIc/X2_Ic_uA
+        X3_Lsquid_pH = LIc/X3_Ic_uA
+        X4_Lsquid_pH = LIc/X4_Ic_uA
+        X5_Lsquid_pH = LIc/X5_Ic_uA
+        X6_Lsquid_pH = LIc/X7_Ic_uA
+        X7_Lsquid_pH = LIc/X7_Ic_uA
+
+        X1_Lsquid_pH = round(X1_Lsquid_pH,3)
+        X2_Lsquid_pH = round(X2_Lsquid_pH,3)
+        X3_Lsquid_pH = round(X3_Lsquid_pH,3)
+        X4_Lsquid_pH = round(X4_Lsquid_pH,3)
+        X5_Lsquid_pH = round(X5_Lsquid_pH,3)
+        X6_Lsquid_pH = round(X6_Lsquid_pH,3)
+        X7_Lsquid_pH = round(X7_Lsquid_pH,3)
+
+        
+        L_propagete_loop_pH_1 = self.calc_propagate_loop_indactance_pH(X1_Ic_uA, X1_Lsquid_pH, X1_Lsquid_pH)
+        L_propagete_loop_pH_1 = round(L_propagete_loop_pH_1,3)
+
+
+        L1_pH = L_propagete_loop_pH_1 * (10/84)
+        L2_pH = L_propagete_loop_pH_1 * (42/84)
+
+        L1_pH = round(L1_pH,3)
+        L2_pH = round(L2_pH,3)
+
+        L_propagete_loop_pH_2 = self.calc_propagate_loop_indactance_pH(X2_Ic_uA, X1_Lsquid_pH, X2_Lsquid_pH)
+        L3_pH = L_propagete_loop_pH_2 
+        L3_pH = round(L3_pH,3)
+
+        L_storage_loop_pH = self.calc_storage_loop_indactance_pH(Ic_uA, X2_Lsquid_pH, X3_Lsquid_pH)
+
+        L4_pH = L_storage_loop_pH * (26/32)
+        L5_pH = L_storage_loop_pH * (5/32)
+        L6_pH = L_storage_loop_pH * (1/32)
+
+        L4_pH = round(L4_pH,3)
+        L5_pH = round(L5_pH,3)
+        L6_pH = round(L6_pH,3)
+
+        L_propagete_loop_pH_4 = self.calc_propagate_loop_indactance_pH(X4_Ic_uA, X3_Lsquid_pH, X4_Lsquid_pH)
+
+        L7_pH = L_propagete_loop_pH_4
+        L8_pH = L_propagete_loop_pH_4*(32/84)
+        L7_pH = round(L7_pH,3)
+        L8_pH = round(L8_pH,3)
+
+        L_propagete_loop_pH_5 = self.calc_propagate_loop_indactance_pH(X5_Ic_uA, X5_Lsquid_pH, X5_Lsquid_pH)
+
+        L9_pH = L_propagete_loop_pH_5 * (10/84)
+        L10_pH = L_propagete_loop_pH_5 * (42/84)
+        L9_pH = round(L9_pH,3)
+        L10_pH = round(L10_pH,3)
+
+        L_clock_loop_pH = self.calc_clock_loop_indactance_pH(X3_Ic_uA, X5_Lsquid_pH, X4_Lsquid_pH, X6_Lsquid_pH, X7_Lsquid_pH)
+
+        L_clock_loop_pH_remain = L_clock_loop_pH - L6_pH 
+        L11_pH = L_clock_loop_pH_remain * (7/9)
+        L12_pH = L_clock_loop_pH_remain * (1/9)
+        L13_pH = L_clock_loop_pH_remain * (1/9)
+        L11_pH = round(L11_pH,3)
+        L12_pH = round(L12_pH,3)
+        L13_pH = round(L13_pH,3)
+
+
+        X1_Icn_uA = round(self.new_nominal_ic_uA(X1_Ic_uA,X1_Lsquid_pH),3)
+        X2_Icn_uA = round(self.new_nominal_ic_uA(X2_Ic_uA,X2_Lsquid_pH),3)
+        X3_Icn_uA = round(self.new_nominal_ic_uA(X3_Ic_uA,X3_Lsquid_pH),3)
+        X4_Icn_uA = round(self.new_nominal_ic_uA(X4_Ic_uA,X4_Lsquid_pH),3)
+        X5_Icn_uA = round(self.new_nominal_ic_uA(X5_Ic_uA,X5_Lsquid_pH),3)
+
+
+
+        R1 = round(self.new_calc_bias_resistor(X1_Icn_uA,X1_Icn_uA,bias_voltage),3)
+        R2 = round(self.new_calc_bias_resistor(X2_Icn_uA,X3_Icn_uA,bias_voltage),3)
+        R3 = round(self.new_calc_bias_resistor(X5_Icn_uA,X5_Icn_uA,bias_voltage),3)
+
+
+        shant_1 = round(self.new_calc_resistor(X1_Ic_uA,2),3)
+        shant_2 = round(self.new_calc_resistor(X2_Ic_uA,2),3)
+        shant_3 = round(self.new_calc_resistor(X3_Ic_uA,2),3)
+        shant_4 = round(self.new_calc_resistor(X4_Ic_uA,2),3)
+        shant_5 = round(self.new_calc_resistor(X5_Ic_uA,2),3)
+        shant_6 = round(self.new_calc_resistor(X6_Ic_uA,2),3)
+        
+
+        R_end = 15.842*8.32/X1_Icn_uA
+
+        self.change_end_resistor(R_end)
+
+
+        self.change_Ic("jtl_squid", str(X1_Ic_uA/100))
+        self.change_Ic("X1_squid", str(X1_Ic_uA/100))
+        self.change_Ic("X2_squid", str(X2_Ic_uA/100))
+        self.change_Ic("X3_squid", str(X3_Ic_uA/100))
+        self.change_Ic("X4_squid", str(X4_Ic_uA/100))
+        self.change_Ic("X5_squid", str(X5_Ic_uA/100))
+        self.change_Ic("X6_squid", str(X6_Ic_uA/100))
+        self.change_Ic("X7_squid", str(X7_Ic_uA/100))
+
+        self.change_resistor(["jtl_squid","X1_squid","X4_squid","X5_squid","X6_squid","X7_squid"],[str(shant_1)+"ohm", str(shant_1)+"ohm"])
+        self.change_resistor(["X2_squid"],[str(shant_2)+"ohm", str(shant_2)+"ohm"])
+        self.change_resistor(["X3_squid"],[str(shant_3)+"ohm", str(shant_3)+"ohm"])
+
+        self.change_indactance(["jtl_squid","X1_squid","X4_squid","X5_squid","X6_squid","X7_squid"],["0.00001pH",str(X1_Lsquid_pH/2)+"pH",str(X1_Lsquid_pH/2)+"pH"])
+        self.change_indactance(["X2_squid"],["0.00001pH",str(X2_Lsquid_pH/2)+"pH",str(X2_Lsquid_pH/2)+"pH"])
+        self.change_indactance(["X3_squid"],["0.00001pH",str(X3_Lsquid_pH/2)+"pH",str(X3_Lsquid_pH/2)+"pH"])
+        
+        self.change_indactance(["jtl_base"],[str(L1_pH)+"pH",str(L2_pH)+"pH",str(L_propagete_loop_pH_1)+"pH",str(L8_pH)+"pH"])
+        self.change_resistor(["jtl_base"],[str(R1)+"ohm"])
+
+        self.change_resistor(["DFF_"],[str(R1)+"ohm",str(R2)+"ohm",str(R3)+"ohm",str(R3)+"ohm"])
+        self.change_indactance(["DFF_"],[str(L1_pH)+"pH",str(L2_pH)+"pH",str(L3_pH)+"pH",str(L4_pH)+"pH",str(L5_pH)+"pH",str(L6_pH)+"pH",str(L7_pH)+"pH",str(L8_pH)+"pH",str(L9_pH)+"pH",str(L10_pH)+"pH",str(L11_pH)+"pH",str(L12_pH)+"pH",str(L13_pH)+"pH"])
+
+        #print(self.netlist)
+        power = (bias_voltage**2/R1)*1+(bias_voltage**2/R2)+(bias_voltage**2/R3)*2
+        return X1_Icn_uA, power
