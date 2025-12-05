@@ -49,6 +49,38 @@ class circuit_sim():
             return False
         return True
     
+    def get_switch_timing_sfq(self, param:list[str]) -> pd.DataFrame:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=FutureWarning, message="The behavior of DataFrame concatenation.*")
+
+            if self.result is None:
+                self.sim()
+        
+            p = math.pi
+            p2 = math.pi * 2
+            srs = pd.DataFrame()
+            try:
+                for column_name in param:
+                    srs[column_name] = self.result[param]
+            except KeyError as e:
+                print(f"Error: The key '{e.args[0]}' does not exist in the DataFrame.")
+                exit()
+    
+            res_df = pd.DataFrame([{'time':None, 'phase':None, 'element':None}])
+            init_phase = srs[( srs.index > 200e-12 ) & ( srs.index < 300e-12 )][column_name].mean()   
+            judge_phase = init_phase + p
+            srs = srs[srs.index > 300e-12]
+            flag = 0
+            
+            for  i in range(len(srs)-1):
+                if (((srs[column_name].iat[i]) - (flag*p2 + judge_phase)) * (srs[column_name].iat[i+1] - (flag*p2 + judge_phase)) )< 0:
+                    flag = flag + 1
+                    res_df = pd.concat([res_df, pd.DataFrame([{'time':srs.index[i], 'phase':flag, 'element':column_name}])], ignore_index=True)
+                elif (srs[column_name].iat[i] - ((flag-1)*p2 + judge_phase)) * ((srs[column_name].iat[i+1]) - ((flag-1)*p2 + judge_phase)) < 0:
+                    flag = flag - 1
+                    res_df = pd.concat([res_df, pd.DataFrame([{'time':srs.index[i], 'phase':flag, 'element':column_name}])], ignore_index=True)
+            return res_df[1:]
+    
     def get_switch_timing(self, param:list[str]) -> pd.DataFrame:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=FutureWarning, message="The behavior of DataFrame concatenation.*")
@@ -68,7 +100,6 @@ class circuit_sim():
                 print(f"Error: The key '{e.args[0]}' does not exist in the DataFrame.")
                 exit()
     
-            
             res_df = pd.DataFrame([{'time':None, 'phase':None, 'element':None}])
             init_phase = srs[( srs.index > 200e-12 ) & ( srs.index < 300e-12 )][column_name].mean()   
             judge_phase = init_phase + p          
@@ -90,6 +121,22 @@ class circuit_sim():
             self.sim()
             if self.result is not None:
                 break
+
+    def add_jitter(self, factors:list[str], add_string):
+        original_lines = self.netlist.split("\n")
+        new_netlist = original_lines
+        pattern_R = re.compile(r"R\d+")
+        pattern_B = re.compile(r"B\d+")
+        for factor in factors:
+            for index, line in enumerate(original_lines):
+                if factor in line:
+                    while not ".ends" in original_lines[index+1]:
+                        if pattern_R.search(original_lines[index+1]) or pattern_B.search(original_lines[index+1]):
+                            new_netlist[index+1] = original_lines[index+1] + " " + add_string
+                        index += 1
+                    break
+        self.netlist = "\n".join(new_netlist)
+        return new_netlist
 
     def add_jitter(self, factors:list[str], add_string):
         original_lines = self.netlist.split("\n")
@@ -534,6 +581,16 @@ class circuit_sim():
         #print((bias_voltage**2/R1)*33+(bias_voltage**2/R2)+(bias_voltage**2/R3)*2)
         #power = (bias_voltage**2/R1)*33+(bias_voltage**2/R2)+(bias_voltage**2/R3)*2
         return 
+
+    def change_Ic_sfq(self, Ic_scale:float):
+        ic_scale = ".param IcScale=" + str(Ic_scale)
+        self.netlist = re.sub(r"^.*param IcScale=.*$", ic_scale, self.netlist, flags=re.M)
+        return
+    
+    def change_Vb_sfq(self, Vb_scale:float):
+        vb_scale = ".param VbScale=" + str(Vb_scale)
+        self.netlist = re.sub(r"^.*param VbScale=.*$", vb_scale, self.netlist, flags=re.M)
+        return
 
     def new_make_jtl2(self, Ic_uA:float, LIc:float, bias_voltage:float=0.5*10**(-3), ibfactor:float=0.4, betac:float=2):
         f_q = 2.06783385*(10**(-15))
@@ -1374,6 +1431,33 @@ class circuit_sim():
         self.param_dic = param_dic
         return self.netlist
 
+    def change_temp(self, temp):
+        temp_line = ".temp " + str(temp)
+        self.netlist = re.sub(r"^.*\.temp.*$", temp_line, self.netlist, flags=re.M)
+        return
+
+    def calc_jitter_sfq(self, start, end, jj_count, file, try_count, index):
+        self.sim()
+        # print(self.get_switch_timing_sfq(start))
+        # print(self.get_switch_timing_sfq(end))
+        base_diff = float(self.get_switch_timing_sfq(end)["time"].iloc[0]) - float(self.get_switch_timing_sfq(start)["time"].iloc[0])
+        jitter_list = []
+        self.change_temp(4.2)
+        bar = tqdm(total=try_count, position=index, desc=f"Simulation {index:02}", leave=True, ncols=100)
+        for _ in range(try_count):
+            bar.update(1)
+            self.sim()
+            jitter_start = self.get_switch_timing_sfq(start)["time"].iloc[0]
+            jitter_end = self.get_switch_timing_sfq(end)["time"].iloc[0]
+            jitter_list.append((float(jitter_end)-float(jitter_start))-base_diff)
+            # jitter_list.append(((jitter_end-jitter_start)-base_diff)/jj_count)
+            with open(file, 'a', encoding='utf-8', newline='\n') as f:
+                f.write(str((jitter_end-jitter_start)-base_diff))
+                # f.write(str(((jitter_end-jitter_start)-base_diff)/jj_count))
+                f.write("\n")
+        bar.close()
+        return jitter_list
+    
     def calc_jitter(self, start, end, jj_count, file, try_count, index):
         self.sim()
         # print(self.get_switch_timing(start))
