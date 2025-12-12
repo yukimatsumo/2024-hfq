@@ -2,7 +2,7 @@
 .model pjjmod jj(Rtype=1, Vg=2.8mV, Cap=0.064pF, R0=100ohm, Rn=16ohm, Icrit=0.1mA, PHI=PI)
 
 .param Jc=0.100m
-.param IcScale=2/213
+.param IcScale=20/213
 .param VbScale=0.50m/2.5m
 
 .param Phi0=2.067833848E-15
@@ -157,7 +157,7 @@ Vb1                         100     0       pwl(0ps 0mV 200ps Vbase)
 Vb2                         200     0       pwl(0ps 0mV 200ps Vb)
 
 *** jsim input file ***
-.tran 0.01ps 900ps 0ps 0.01ps
+.tran 0.05ps 900ps 0ps 0.05ps
 * .tran 0.1ps 1300ps 300ps 0.1ps
 
 .temp 4.2
